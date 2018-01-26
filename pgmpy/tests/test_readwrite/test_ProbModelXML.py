@@ -547,43 +547,51 @@ class TestProbModelXMLReaderString(unittest.TestCase):
                                     'role': 'chance',
                                     'type': 'finiteStates',
                                     'Coordinates': {'y': '52', 'x': '568'},
-                                    'AdditionalProperties': {'Title': 'S', 'Relevance': '7.0'}},
+                                    'AdditionalProperties': {'Title': 'S', 'Relevance': '7.0'},
+                                    'weight': None},
                          'Bronchitis': {'States': {'no': {}, 'yes': {}},
                                         'role': 'chance',
                                         'type': 'finiteStates',
                                         'Coordinates': {'y': '181', 'x': '698'},
-                                        'AdditionalProperties': {'Title': 'B', 'Relevance': '7.0'}},
+                                        'AdditionalProperties': {'Title': 'B', 'Relevance': '7.0'},
+                                        'weight': None},
                          'VisitToAsia': {'States': {'no': {}, 'yes': {}},
                                          'role': 'chance',
                                          'type': 'finiteStates',
                                          'Coordinates': {'y': '58', 'x': '290'},
-                                         'AdditionalProperties': {'Title': 'A', 'Relevance': '7.0'}},
+                                         'AdditionalProperties': {'Title': 'A', 'Relevance': '7.0'},
+                                         'weight': None},
                          'Tuberculosis': {'States': {'no': {}, 'yes': {}},
                                           'role': 'chance',
                                           'type': 'finiteStates',
                                           'Coordinates': {'y': '150', 'x': '201'},
-                                          'AdditionalProperties': {'Title': 'T', 'Relevance': '7.0'}},
+                                          'AdditionalProperties': {'Title': 'T', 'Relevance': '7.0'},
+                                          'weight': None},
                          'X-ray': {'States': {'no': {}, 'yes': {}},
                                    'role': 'chance',
                                    'AdditionalProperties': {'Title': 'X', 'Relevance': '7.0'},
                                    'Coordinates': {'y': '322', 'x': '252'},
                                    'Comment': 'Indica si el test de rayos X ha sido positivo',
-                                   'type': 'finiteStates'},
+                                   'type': 'finiteStates',
+                                   'weight': None},
                          'Dyspnea': {'States': {'no': {}, 'yes': {}},
                                      'role': 'chance',
                                      'type': 'finiteStates',
                                      'Coordinates': {'y': '321', 'x': '533'},
-                                     'AdditionalProperties': {'Title': 'D', 'Relevance': '7.0'}},
+                                     'AdditionalProperties': {'Title': 'D', 'Relevance': '7.0'},
+                                     'weight': None},
                          'TuberculosisOrCancer': {'States': {'no': {}, 'yes': {}},
                                                   'role': 'chance',
                                                   'type': 'finiteStates',
                                                   'Coordinates': {'y': '238', 'x': '336'},
-                                                  'AdditionalProperties': {'Title': 'E', 'Relevance': '7.0'}},
+                                                  'AdditionalProperties': {'Title': 'E', 'Relevance': '7.0'},
+                                                  'weight': None},
                          'LungCancer': {'States': {'no': {}, 'yes': {}},
                                         'role': 'chance',
                                         'type': 'finiteStates',
                                         'Coordinates': {'y': '152', 'x': '421'},
-                                        'AdditionalProperties': {'Title': 'L', 'Relevance': '7.0'}}}
+                                        'AdditionalProperties': {'Title': 'L', 'Relevance': '7.0'},
+                                        'weight': None}}
         edge_expected = {'LungCancer': {'TuberculosisOrCancer': {'weight': None,
                                                                  'directed': 'true'}},
                          'Smoker': {'LungCancer': {'weight': None,
@@ -1081,6 +1089,9 @@ class TestProbModelXMLWriter(unittest.TestCase):
 
 class TestProbModelXMLmethods(unittest.TestCase):
     def setUp(self):
+        variables = ['VisitToAsia', 'Tuberculosis', 'Smoker', 'LungCancer',
+                     'Bronchitis', 'Dyspnea', 'TuberculosisOrCancer', 'X-ray', 'Sinus']
+
         edges_list = [('VisitToAsia', 'Tuberculosis'),
                       ('LungCancer', 'TuberculosisOrCancer'),
                       ('Smoker', 'LungCancer'),
@@ -1129,7 +1140,12 @@ class TestProbModelXMLmethods(unittest.TestCase):
                                 'role': 'chance',
                                 'type': 'finiteStates',
                                 'Coordinates': {'y': '152', 'x': '421'},
-                                'AdditionalProperties': {'Title': 'L', 'Relevance': '7.0'}}}
+                                'AdditionalProperties': {'Title': 'L', 'Relevance': '7.0'}},
+                 'Sinus': {'States': {'no': {}, 'yes': {}},
+                           'role': 'chance',
+                           'type': 'finiteStates',
+                           'Coordinates': {'y': '200', 'x': '100'},
+                           'AdditionalProperties': {'Title': 'S', 'Relevance': '7.0'}}}
         edges = {'LungCancer': {'TuberculosisOrCancer': {'directed': 'true'}},
                  'Smoker': {'LungCancer': {'directed': 'true'},
                             'Bronchitis': {'directed': 'true'}},
@@ -1156,8 +1172,12 @@ class TestProbModelXMLmethods(unittest.TestCase):
                 {'Values': np.array([[0.99, 0.01], [0.95, 0.05]]),
                  'Variables': {'Tuberculosis': ['VisitToAsia']}},
                 {'Values': np.array([[1, 0, 0, 1], [0, 1, 0, 1]]),
-                 'Variables': {'TuberculosisOrCancer': ['LungCancer', 'Tuberculosis']}}]
-        self.model = BayesianModel(edges_list)
+                 'Variables': {'TuberculosisOrCancer': ['LungCancer', 'Tuberculosis']}},
+                {'Values': np.array([[0.3], [0.7]]),
+                 'Variables': {'Sinus': []}}]
+        self.model = BayesianModel()
+        self.model.add_nodes_from(variables)
+        self.model.add_edges_from(edges_list)
         for node in nodes:
             self.model.node[node] = nodes[node]
         for edge in edges:
@@ -1214,6 +1234,19 @@ class TestProbModelXMLmethods(unittest.TestCase):
         <Coordinates x="421" y="152"/>
         <Property name="Relevance" value="7.0"/>
         <Property name="Title" value="L"/>
+        <States>
+          <State name="no">
+            <AdditionalProperties/>
+          </State>
+          <State name="yes">
+            <AdditionalProperties/>
+          </State>
+        </States>
+      </Variable>
+      <Variable name="Sinus" role="chance" type="finiteStates">
+        <Coordinates x="100" y="200"/>
+        <Property name="Relevance" value="7.0"/>
+        <Property name="Title" value="S"/>
         <States>
           <State name="no">
             <AdditionalProperties/>
@@ -1372,6 +1405,12 @@ class TestProbModelXMLmethods(unittest.TestCase):
           <Variable name="Tuberculosis"/>
         </Variables>
         <Values>1.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 </Values>
+      </Potential>
+      <Potential role="conditionalProbability" type="Table">
+        <Variables>
+          <Variable name="Sinus"/>
+        </Variables>
+        <Values>0.3 0.7 </Values>
       </Potential>
     </Potentials>
     <AdditionalConstraints/>

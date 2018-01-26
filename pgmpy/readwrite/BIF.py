@@ -1,4 +1,5 @@
 import re
+import collections
 from string import Template
 
 import numpy
@@ -284,9 +285,10 @@ class BIFReader(object):
         <pgmpy.models.BayesianModel.BayesianModel object at 0x7f20af154320>
         """
         try:
-            model = BayesianModel(self.variable_edges)
-            model.name = self.network_name
+            model = BayesianModel()
             model.add_nodes_from(self.variable_names)
+            model.add_edges_from(self.variable_edges)
+            model.name = self.network_name
 
             tabular_cpds = []
             for var in sorted(self.variable_cpds.keys()):
@@ -465,6 +467,7 @@ $properties}\n""")
         property_tag = {}
         for variable in sorted(variables):
             properties = self.model.node[variable]
+            properties = collections.OrderedDict(sorted(properties.items()))
             property_tag[variable] = []
             for prop, val in properties.items():
                 property_tag[variable].append(str(prop) + " = " + str(val))
