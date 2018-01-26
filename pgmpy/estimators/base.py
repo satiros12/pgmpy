@@ -100,6 +100,7 @@ class BaseEstimator(object):
         c2  0   0   1   0
         """
 
+        parents = list(parents)
         # default for how to deal with missing data can be set in class constructor
         if complete_samples_only is None:
             complete_samples_only = self.complete_samples_only
@@ -111,11 +112,21 @@ class BaseEstimator(object):
             state_count_data = data.ix[:, variable].value_counts()
             state_counts = state_count_data.reindex(self.state_names[variable]).fillna(0).to_frame()
 
+        elif len(parents) == 1:
+            parent = parents[0]
+            parents_states = self.state_names[parent] #for parent in parents]
+            # count how often each state of 'variable' occured, conditional on parents' states
+            state_count_data = data.groupby([variable] + parents).size().unstack(parents)
+            # reindex rows & columns to sort them and to add missing ones
+            # missing row    = some state of 'variable' did not occur in data
+            # missing column = some state configuration of current 'variable's parents
+            #                  did not occur in data
+            state_counts = state_count_data.fillna(0)
+
         else:
             parents_states = [self.state_names[parent] for parent in parents]
             # count how often each state of 'variable' occured, conditional on parents' states
             state_count_data = data.groupby([variable] + parents).size().unstack(parents)
-
             # reindex rows & columns to sort them and to add missing ones
             # missing row    = some state of 'variable' did not occur in data
             # missing column = some state configuration of current 'variable's parents
@@ -123,7 +134,6 @@ class BaseEstimator(object):
             row_index = self.state_names[variable]
             column_index = pd.MultiIndex.from_product(parents_states, names=parents)
             state_counts = state_count_data.reindex(index=row_index, columns=column_index).fillna(0)
-
         return state_counts
 
     def test_conditional_independence(self, X, Y, Zs=[]):
